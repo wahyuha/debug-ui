@@ -1,9 +1,10 @@
 <script>
-  import { getBase64Size, fileToBase64WithEvent } from "./utils/index";
+  import { getBase64Size, fileToBase64WithEvent, resizeImage } from "./utils/index";
 
   let uploader;
   let files;
   let fromPhoto = '';
+  let fromPhotoB = '';
 
   const handleClick = () => {
     console.log('init click');
@@ -23,8 +24,14 @@
     }
     console.log('file end');
   };
-</script>
 
+  const handleImageChangeB = async () => {
+    const file = files[0];
+    const comps = await resizeImage(file);
+    fromPhotoB = comps;
+  };
+</script>
+<div style={{ width: '100%' }}>
   <input
     type="file"
     accept="image/*"
@@ -37,10 +44,31 @@
     on:click={handleClick}
     >Test foto</button>
 
-  <!-- <PageUpload {text} /> -->
   <h2>Preview</h2>
   {#if fromPhoto}
   size : {getBase64Size(fromPhoto)}
   {/if}
   <!-- svelte-ignore a11y-img-redundant-alt -->
   <img src={fromPhoto} alt="photo" style={{ width: '100%' }} />
+</div>
+<div style={{ width: '100%' }}>
+  <h2>Test B</h2>
+  <input
+    type="file"
+    accept="image/*"
+    capture="camera"
+    bind:this={uploader}
+    bind:files
+    on:change={e => handleImageChangeB(e)} />
+  
+  <button
+    on:click={handleClick}
+    >Test foto</button>
+
+  <h2>Preview B</h2>
+  {#if fromPhotoB}
+  size : {getBase64Size(fromPhotoB)}
+  {/if}
+  <!-- svelte-ignore a11y-img-redundant-alt -->
+  <img src={fromPhotoB} alt="photo" style={{ width: '100%' }} />
+</div>

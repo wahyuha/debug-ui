@@ -1,48 +1,32 @@
-export const fileToBase64 = file =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    console.log('info A', reader);
-
-    reader.onload = event => {
-      console.log('onload event', event);
-      const img = new Image();
-      img.src = event.target.result;
-      (img.onload = () => {
-        console.log('info B');
-        const elem = document.createElement("canvas");
-
-        const width = img.width > 600 ? 600 : img.width;
-        const scaleFactor = width / img.width;
-        const height = img.height * scaleFactor;
-        const imgQty = 0.5;
-
-        elem.width = width;
-        elem.height = height;
-
-        const ctx = elem.getContext("2d");
-        console.log('info I');
-
-        ctx.drawImage(img, 0, 0, width, height);
-        console.log('info J');
-
-        const result = ctx.canvas.toDataURL(img, "image/jpeg", imgQty);
-        console.log('info K');
-        return resolve(result);
-      }),
-      (reader.onerror = error => {
-        console.log(error)
-        reject(error)
-      });
-    };
-  });
+import imageCompression from 'browser-image-compression';
 
 export function getBase64Size(base64Data) {
   const dLength = base64Data.length;
   const subpop = base64Data.substr(dLength - 2) === '==' ? 2 : 1;
-  console.log('subpop ', subpop);
   const size = (dLength * (3/4)) - subpop;
   return size;
+}
+
+export const resizeImage = async (file) => {
+  const imageFile = file;
+
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 600,
+    useWebWorker: false
+  }
+
+  try {
+    const compressedFile = await imageCompression(imageFile, options);
+    console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`); // smaller than maxSizeMB
+    console.log(compressedFile);
+
+    const compressed64 = imageCompression.getDataUrlFromFile(compressedFile);
+
+    return compressed64;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 export const fileToBase64WithEvent = file => new Promise((resolve, reject) => {
@@ -55,34 +39,51 @@ export const fileToBase64WithEvent = file => new Promise((resolve, reject) => {
     const img = new Image();
     img.src = event.target.result;
 
-    img.addEventListener("load", () => {
+    img.addEventListener("load", (img_e) => {
       console.log('nr B');
       const elem = document.createElement("canvas");
 
       const width = img.width > 600 ? 600 : img.width;
       const scaleFactor = width / img.width;
       const height = img.height * scaleFactor;
-      const imgQty = 0.5;
-
       elem.width = width;
       elem.height = height;
+      let ctx = elem.getContext("2d");
 
-      const ctx = elem.getContext("2d");
-      console.log('nr I');
+      let imgQty = 0.5;
+      ctx.drawImage(img_e.target, 0, 0, width, height);
+      let result = ctx.canvas.toDataURL(img, "image/jpeg", imgQty);
+      let modifiedSize = getBase64Size(result);
+      console.log('sizeee :', modifiedSize);
+      // console.log(result);
 
-      ctx.drawImage(img, 0, 0, width, height);
-      console.log('nr J');
+      if (modifiedSize > 500000) {
+        let elem2 = document.createElement("canvas");
+        let ctx2 = elem2.getContext("2d");
+        let imgQty2 = 1;
+        elem2.width = width;
+        elem2.height = height;
+        ctx2.drawImage(img_e.target, 0, 0, width, height);
+        let result2 = ctx2.canvas.toDataURL(result, "image/jpeg", 0.5);
+        let modifiedSize2 = getBase64Size(result2);
+        console.log('size #2 :', modifiedSize2);
+        // console.log(result2);
 
-      const result = ctx.canvas.toDataURL(img, "image/jpeg", imgQty);
-      console.log('nr K');
+        ctx.drawImage(img, 0, 0, width, height,
+        0, 0, elem.width * 0.5, elem.height * 0.5);
+        let result3 = ctx2.canvas.toDataURL(img, "image/jpeg", 0.5);
+        let modifiedSize3 = getBase64Size(result3);
+        console.log('size #3 :', modifiedSize3);
 
-      console.log('sizeee :', getBase64Size(result));
+        return resolve(result3);
+      }
       return resolve(result);
     });
 
     img.addEventListener("error", (e) => {
       console.log('error img');
       console.error(e);
+      reject(error)
     })
   });
 
@@ -94,3 +95,4 @@ export const fileToBase64WithEvent = file => new Promise((resolve, reject) => {
 
   reader.readAsDataURL(file);
 });
+
