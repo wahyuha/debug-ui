@@ -2,6 +2,7 @@
   import { getBase64Size, fileToBase64WithEvent, resizeImage } from "./utils/index";
 
   let uploader;
+  let uploader2;
   let files;
   let fromPhoto = '';
   let fromPhotoB = '';
@@ -9,6 +10,11 @@
   const handleClick = () => {
     console.log('init click');
     uploader.click();
+  };
+
+  const handleClick2 = () => {
+    console.log('init click 2');
+    uploader2.click();
   };
 
   const handleImageChange = async () => {
@@ -57,12 +63,12 @@
     type="file"
     accept="image/*"
     capture="camera"
-    bind:this={uploader}
+    bind:this={uploader2}
     bind:files
     on:change={e => handleImageChangeB(e)} />
   
   <button
-    on:click={handleClick}
+    on:click={handleClick2}
     >Test foto</button>
 
   <h2>Preview B</h2>
